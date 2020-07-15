@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LearnIdsrv.Web.Controllers
@@ -13,9 +14,9 @@ namespace LearnIdsrv.Web.Controllers
             return Challenge(new Microsoft.AspNetCore.Authentication.AuthenticationProperties() { RedirectUri = "Home/Index"}, Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectDefaults.AuthenticationScheme);
         }
 
-        public IActionResult Logout()
+        public ActionResult Logout()
         {
-            return View();
+            return SignOut("Cookies", "oidc");
         }
     }
 }

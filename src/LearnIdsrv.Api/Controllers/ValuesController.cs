@@ -13,7 +13,6 @@ namespace LearnIdsrv.Api.Controllers
     public class ValuesController : ControllerBase
     {
         [HttpGet]
-        [Route("GetData")]
         public ActionResult<IEnumerable<string>> Get()
         {
             var claims = HttpContext.User.Claims.Select(x => $"{x.Type}:{x.Value}");
