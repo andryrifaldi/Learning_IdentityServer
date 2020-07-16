@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using IdentityModel;
 using IdentityServer4.Models;
 using System.Collections.Generic;
 
@@ -9,42 +10,45 @@ namespace IdentityServer4.InMemory
 {
     public static class Config
     {
-        public static IEnumerable<IdentityResource> IdentityResources =>
+          public static IEnumerable<IdentityResource> GetIdentityResources() =>
     new List<IdentityResource>
     {
                 new IdentityResources.OpenId(),
-                new IdentityResources.Profile(),
+                new IdentityResources.Profile()
     };
+
+        public static IEnumerable<ApiResource> GetApis() =>
+            new List<ApiResource> {
+                new ApiResource("api1"),
+            };
 
         public static IEnumerable<ApiScope> ApiScopes =>
                     new List<ApiScope>
                     {
-                new ApiScope("api1", "My API")
+                    new ApiScope("api1", "My API")
                     };
-
-        public static IEnumerable<Client> Clients =>
-            new List<Client>
-            {
-                // interactive ASP.NET Core MVC client
-                new Client
-                {
+        public static IEnumerable<Client> GetClients() =>
+            new List<Client> {
+                new Client {
                     ClientId = "mvc",
-                    ClientSecrets = { new Secret("secret".Sha256()) },
+                    ClientSecrets = { new Secret("secret".ToSha256()) },
 
                     AllowedGrantTypes = GrantTypes.Code,
-                    
-                    // where to redirect to after login
+                    RequirePkce = true,
+
                     RedirectUris = { "https://localhost:44385/signin-oidc" },
+                    PostLogoutRedirectUris = { "https://localhost:44385/Home/Index" },
 
-                    // where to redirect to after logout
-                    PostLogoutRedirectUris = { "https://localhost:44385/signout-callback-oidc" },
-
-                    AllowedScopes = new List<string>
-                    {
+                    AllowedScopes = {
+                        "api1",
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        "api1"
-                    }
+                    },
+
+                    // puts all the claims in the id token
+                    //AlwaysIncludeUserClaimsInIdToken = true,
+                    AllowOfflineAccess = true,
+                    RequireConsent = false,
                 }
             };
     }

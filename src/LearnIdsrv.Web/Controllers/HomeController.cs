@@ -1,58 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using LearnIdsrv.Web.Models;
 using System.Net.Http;
 using Microsoft.AspNetCore.Authentication;
-using System.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
+using IdentityModel.Client;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace LearnIdsrv.Web.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public HomeController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
         public IActionResult Index()
         {
             return View();
         }
 
-        //public async Task<IActionResult> CallAPI()
-        //{
-        //    var apiUrl = "https://localhost:44381/api/values";
-
-        //    var accessToken = Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.GetTokenAsync(HttpContext, "access_token");
-        //    var client = new HttpClient();
-
-        //    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken.Result);
-
-        //    HttpResponseMessage response = await client.GetAsync(apiUrl);
-
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        var json = await response.Content.ReadAsStringAsync();
-        //        ViewData["json"] = json;
-        //    }
-        //    else
-        //    {
-        //        ViewData["json"] = $"Error : {response.StatusCode}";
-        //    }
-
-        //    return View();
-        //}
-
         public async Task<IActionResult> CallApi()
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var _accessToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
 
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var content = await client.GetStringAsync("https://localhost:44381/api/values");
+            var apiClient = _httpClientFactory.CreateClient();
+            apiClient.SetBearerToken(accessToken);
 
-            ViewBag.Json = JArray.Parse(content).ToString();
-            return View("json");
+            var response = await apiClient.GetAsync("https://localhost:44381/api/values");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                ViewData["json"] = json;
+            }
+            else
+            {
+                ViewData["json"] = $"Error : {response.StatusCode}";
+            }
+
+            return View();
         }
 
 

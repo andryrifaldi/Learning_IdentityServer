@@ -1,14 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,8 +18,6 @@ namespace LearnIdsrv.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
-
             JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
             services.AddAuthentication(options =>
@@ -42,48 +32,21 @@ namespace LearnIdsrv.Web
 
                 options.ClientId = "mvc";
                 options.ClientSecret = "secret";
-                options.ResponseType = "code";
-
-                options.Scope.Add("api1");
-
                 options.SaveTokens = true;
+                options.ResponseType = "code";
+                options.SignedOutCallbackPath = "/Home/Index";
+
+                options.GetClaimsFromUserInfoEndpoint = true;
+
+                // configure scope
+                options.Scope.Clear();
+                options.Scope.Add("openid");
+                options.Scope.Add("api1");
+                options.Scope.Add("offline_access");
             });
-        }
 
-        private void ConfigureIdentityServer(IServiceCollection services)
-        {
-            var builder = services.AddAuthentication(options => SetAuthOption(options));
-            builder.AddCookie();
-            builder.AddOpenIdConnect(options => SetOpenIdConnectionOption(options));
-        }
-
-        private void SetOpenIdConnectionOption(OpenIdConnectOptions options)
-        {
-            options.SignInScheme = "Cookies";
-            options.Authority = "https://localhost:5001";
-            options.ClientId = "LearnIdsrv.Web";
-            options.ClientSecret = "0b4168e4-2832-48ea-8fc8-7e4686b3620b";
-            options.RequireHttpsMetadata = false;
-
-            options.ResponseType = "code";
-            options.UsePkce = true;
-
-            options.Scope.Clear();
-            options.Scope.Add("profile");
-            options.Scope.Add("openid");
-            options.Scope.Add("LearnIdsrv.Api");
-            options.Scope.Add("offline_access");
-            options.ClaimActions.MapJsonKey("website", "website");
-
-            // keeps id_token smaller
-            options.GetClaimsFromUserInfoEndpoint = true;
-            options.SaveTokens = true;
-        }
-
-        private void SetAuthOption(AuthenticationOptions options)
-        {
-            options.DefaultScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectDefaults.AuthenticationScheme;
+            services.AddControllersWithViews();
+            services.AddHttpClient();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
