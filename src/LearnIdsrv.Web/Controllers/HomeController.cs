@@ -1,32 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using LearnIdsrv.Web.Models;
 using System.Net.Http;
+using Microsoft.AspNetCore.Authentication;
+using IdentityModel.Client;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace LearnIdsrv.Web.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public HomeController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
         public IActionResult Index()
         {
             return View();
         }
 
-        public async Task<IActionResult> CallAPI()
+        public async Task<IActionResult> CallApi()
         {
-            var apiUrl = "https://localhost:44381/api/values/GetData";
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var _accessToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
 
-            var accessToken = Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.GetTokenAsync(HttpContext, "access_token");
-            var client = new HttpClient();
+            var apiClient = _httpClientFactory.CreateClient();
+            apiClient.SetBearerToken(accessToken);
 
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken.Result);
-
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
-
+            var response = await apiClient.GetAsync("https://localhost:44381/api/values");
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
@@ -39,6 +43,7 @@ namespace LearnIdsrv.Web.Controllers
 
             return View();
         }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

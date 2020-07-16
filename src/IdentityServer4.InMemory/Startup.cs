@@ -28,28 +28,12 @@ namespace IdentityServer4.InMemory
         {
             services.AddControllersWithViews();
 
-            var builder = services.AddIdentityServer(options =>
-            {
-                options.Events.RaiseErrorEvents = true;
-                options.Events.RaiseInformationEvents = true;
-                options.Events.RaiseFailureEvents = true;
-                options.Events.RaiseSuccessEvents = true;
-
-                // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
-                options.EmitStaticAudienceClaim = true;
-            })
+            var builder = services.AddIdentityServer()
+                .AddInMemoryApiScopes(Config.ApiScopes)
+                .AddInMemoryApiResources(Config.GetApis())
+                .AddInMemoryIdentityResources(Config.GetIdentityResources())
+                .AddInMemoryClients(Config.GetClients())
                 .AddTestUsers(TestUsers.Users);
-
-            // in-memory, code config
-            //builder.AddInMemoryIdentityResources(Config.IdentityResources);
-            //builder.AddInMemoryApiScopes(Config.ApiScopes);
-            //builder.AddInMemoryClients(Config.Clients);
-
-            // in-memory, json config
-            builder.AddInMemoryIdentityResources(Configuration.GetSection("IdentityResources"));
-            builder.AddInMemoryApiScopes(Configuration.GetSection("ApiResources"));
-            builder.AddInMemoryClients(Configuration.GetSection("Clients"));
-
 
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
